@@ -66,14 +66,14 @@ bool Game::windowInit(){
 }
 
 bool Game::fontInit(int size){
-    /*
+    
     scoreBoard = al_load_font("font.ttf", size, 0);
 
     if(!scoreBoard){
         fprintf(stderr, "Allegro couldn't load the font\n");
         return false;
     }
-    */
+    
 
     return true;
 }
@@ -141,11 +141,11 @@ Object Game::getPlayer(int id){
 }
 
 void Game::drawBall(){
-
+    // to do
 }
 
 void Game::drawPlayers(){
-
+    // to do
 }
 
 void Game::setBallPosition(int x, int y){
@@ -163,11 +163,28 @@ void Game::setPlayerPosition(int id, int x, int y){
     this->players[id].y = y;
 }
 
-void Game::setBallSpeed(double speed){
-    this->ball.speed = speed;
+void Game::setBallSpeed(double vel_x, double vel_y){
+    this->ball.vx = vel_x;
+    this->ball.vy = vel_y;
 }
 
-void Game::setBallSpeedAngle(double speed_angle){
-    this->ball.speed_angle = speed_angle;
+void Game::setBallRadius(double radius){
+    ballRadius = radius;
 }
 
+int Game::checkGoal(){
+    if((ball.x + ballRadius <= 0)){
+        return 2; // player 2 goal
+    }else if(ball.x + ballRadius >= width){
+        return 1; // player 1 goal
+    }else{
+        return 0; // no goal
+    }
+}
+
+bool Game::checkCollision(){
+    if((ball.y + ballRadius <= 0) || (ball.y + ballRadius >= height)){ // collision with wall
+        return true;
+    }
+    // to do: colision with player
+}

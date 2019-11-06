@@ -15,8 +15,7 @@
 
 typedef struct{
     int x, y;
-    double speed;
-    double speed_angle;
+    double vx, vy;
 } Object;
 
 class Game{
@@ -57,11 +56,13 @@ class Game{
         // setters
         void setBallPosition(int x, int y);
         void setPlayerPosition(int id, int x, int y);
-        void setBallSpeed(double speed);
-        void setBallSpeedAngle(double speed_angle);
+        void setBallRadius(double radius);
+        void setBallSpeed(double vel_x, double vel_y);
         // getters
         Object getPlayer(int id);
         Object getBall();
+        // collisions
+        bool checkBallCollision();
 
 
     private:
@@ -80,6 +81,8 @@ class Game{
         double startingTime;
         double FPS;
 
+        // Objects
         Object players[qtPlayers];
         Object ball;
+        double ballRadius;
 };
