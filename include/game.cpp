@@ -59,6 +59,8 @@ bool Game::windowInit(){
 
     // register window on the event queue
     al_register_event_source(eventQueue, al_get_display_event_source(mainWindow));
+    al_register_event_source(eventQueue, al_get_keyboard_event_source());
+    al_register_event_source(eventQueue, al_get_mouse_event_source());
 
     return true;
 }
@@ -131,7 +133,7 @@ Object Game::getBall(){
 Object Game::getPlayer(int id){
     // only works with [1 <= id <= qtPlayers]
     if(id > qtPlayers || id <= 0){
-        fprintf(stderr, "Invalid object id\N");
+        fprintf(stderr, "Invalid object id\n");
         exit(-1);
     }
 

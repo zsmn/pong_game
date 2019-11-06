@@ -1,4 +1,4 @@
-#include<include/game.h>
+#include"include/game.h"
 
 #define WIDTH 640
 #define HEIGHT 480
