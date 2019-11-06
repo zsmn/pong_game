@@ -5,6 +5,18 @@ Game::Game(int width, int height, int fps, char *title){
     this->height = height;
     this->FPS = fps;
     this->title = title;
+
+    setBallPosition(width/2, height/2);
+    setBallRadius(raiobola);
+
+    placar1 = 0;
+    placar2 = 0;
+    ballSpeed = 10;
+    collision_count = 0;
+
+    srand(time(NULL));
+
+    setBallMovement(randomMovement());
 }
 
 Game::~Game(){
@@ -14,6 +26,8 @@ Game::~Game(){
 }
 
 bool Game::coreInit(){
+    al_init_image_addon();
+
     if(!al_init()){
         fprintf(stderr, "Allegro couldn't be started\n");
         return false;
@@ -45,6 +59,10 @@ bool Game::coreInit(){
         return false;
     }
 
+    if (!al_install_keyboard()){
+        fprintf(stderr, "Falha ao inicializar teclado.\n");
+        return false;
+    }
     return true;
 }
 
@@ -60,20 +78,18 @@ bool Game::windowInit(){
     // register window on the event queue
     al_register_event_source(eventQueue, al_get_display_event_source(mainWindow));
     al_register_event_source(eventQueue, al_get_keyboard_event_source());
-    al_register_event_source(eventQueue, al_get_mouse_event_source());
 
     return true;
 }
 
 bool Game::fontInit(int size){
     
-    scoreBoard = al_load_font("font.ttf", size, 0);
+    scoreBoard = al_load_font("resources/score.ttf", size, 0);
 
     if(!scoreBoard){
         fprintf(stderr, "Allegro couldn't load the font\n");
         return false;
-    }
-    
+    } 
 
     return true;
 }
@@ -100,7 +116,7 @@ ALLEGRO_EVENT_QUEUE* Game::getEventQueue(){
     return eventQueue;
 }
 
-ALLEGRO_EVENT* Game::getEvent(){
+ALLEGRO_EVENT Game::getEvent(){
     return allegroEvent;
 }
 
@@ -109,7 +125,7 @@ bool Game::isEventQueueEmpty(){
 }
 
 void Game::waitForEvent(){
-    al_wait_for_event(eventQueue, allegroEvent);
+    al_wait_for_event(eventQueue, &allegroEvent);
 }
 
 void Game::flipAndClear(){
@@ -131,8 +147,7 @@ Object Game::getBall(){
 }
 
 Object Game::getPlayer(int id){
-    // only works with [1 <= id <= qtPlayers]
-    if(id > qtPlayers || id <= 0){
+    if(id >= qtPlayers || id < 0){
         fprintf(stderr, "Invalid object id\n");
         exit(-1);
     }
@@ -141,11 +156,13 @@ Object Game::getPlayer(int id){
 }
 
 void Game::drawBall(){
-    // to do
+    al_draw_filled_circle(ball.x, ball.y, ballRadius, al_map_rgb(255, 255, 255));
 }
 
 void Game::drawPlayers(){
-    // to do
+    for(int x = 0; x < qtPlayers; x++){
+        al_draw_rectangle(players[x].x, players[x].y - tamPlayer, players[x].x, players[x].y + tamPlayer, al_map_rgb(255, 255, 255), 0);
+    }
 }
 
 void Game::setBallPosition(int x, int y){
@@ -154,37 +171,141 @@ void Game::setBallPosition(int x, int y){
 }
 
 void Game::setPlayerPosition(int id, int x, int y){
-    if(id <= 0 || id >= qtPlayers){
-        fprintf(stderr, "Invalid Player ID\n");
+    if(id < 0 || id >= qtPlayers){
         exit(-1);
     }
-
-    this->players[id].x = x;
-    this->players[id].y = y;
-}
-
-void Game::setBallSpeed(double vel_x, double vel_y){
-    this->ball.vx = vel_x;
-    this->ball.vy = vel_y;
+    players[id].x = x;
+    players[id].y = y;
 }
 
 void Game::setBallRadius(double radius){
     ballRadius = radius;
 }
 
-int Game::checkGoal(){
+void Game::checkGoal(){
     if((ball.x + ballRadius <= 0)){
-        return 2; // player 2 goal
+        addScore(1); // player 2 goal
     }else if(ball.x + ballRadius >= width){
-        return 1; // player 1 goal
-    }else{
-        return 0; // no goal
+        addScore(0); // player 1 goal
     }
 }
 
+bool Game::checkPlayerCollision(int id, int movement){
+    if(movement == UP && getPlayer(id).y - tamPlayer >= 0) return false;
+    if(movement == DOWN && getPlayer(id).y + tamPlayer <= height) return false;
+
+    return true;
+}
+
 bool Game::checkCollision(){
-    if((ball.y + ballRadius <= 0) || (ball.y + ballRadius >= height)){ // collision with wall
+    int rand = 0;
+
+    if((ball.y - ballRadius) <= 0){ // top corner
+        if(getBallMovement() == UPLEFT){
+            rand = DOWNLEFT;
+        }else if(getBallMovement() == UPRIGHT){
+            rand = DOWNRIGHT;
+        }
+        setBallMovement(rand);
+        return true;
+    }else if((ball.y + ballRadius) >= height){ // bottom corner
+        if(getBallMovement() == DOWNLEFT){
+            rand = UPLEFT;
+        }else if(getBallMovement() == DOWNRIGHT){
+            rand = UPRIGHT;
+        }
+        setBallMovement(rand);
+        return true;
+    }
+    if((ball.x - ballRadius <= players[0].x) && (ball.y - ballRadius <= (players[0].y + tamPlayer)) && (ball.y + ballRadius >= (players[0].y - tamPlayer))){
+        while(rand == NO_MOVEMENT || rand == LEFT || rand == UPLEFT){
+            rand = randomMovement();
+        }
+        setBallMovement(rand);
+        return true;
+    }
+    if((ball.x + ballRadius >= players[1].x) && (ball.y - ballRadius <= (players[1].y + tamPlayer)) && (ball.y + ballRadius >= (players[1].y - tamPlayer))){
+        while(rand == NO_MOVEMENT || rand == RIGHT || rand == UPRIGHT){
+            rand = randomMovement();
+        }
+        setBallMovement(rand);
         return true;
     }
     // to do: colision with player
+}
+
+void Game::setPlayerMovement(int id, int movement){
+    players[id].movement = movement;
+}
+
+void Game::setBallMovement(int movement){
+    ball.movement = movement;
+}
+
+int Game::getPlayerMovement(int id){
+    return players[id].movement;
+}
+
+int Game::getBallMovement(){
+    return ball.movement;
+}
+
+void Game::moveBall(){
+    if(ball.movement == LEFT){
+        ball.x -= ballSpeed;
+    }else if(ball.movement == RIGHT){
+        ball.x += ballSpeed;
+    }else if(ball.movement == UPLEFT){
+        ball.x -= ballSpeed/2;
+        ball.y -= ballSpeed/2;
+    }else if(ball.movement == DOWNLEFT){
+        ball.x -= ballSpeed/2;
+        ball.y += ballSpeed/2;
+    }else if(ball.movement == UPRIGHT){
+        ball.x += ballSpeed/2;
+        ball.y -= ballSpeed/2;
+    }else if(ball.movement == DOWNRIGHT){
+        ball.x += ballSpeed/2;
+        ball.y += ballSpeed/2;
+    }else if(ball.movement == NO_MOVEMENT){}
+    
+    if(!checkCollision()){
+        checkGoal();
+    }else{
+        collision_count++;
+        if(collision_count == collision_nheco){
+            collision_count = 0;
+            ballSpeed += 10;
+        }
+        fprintf(stderr, "eu colidi, vagabundo.\n");
+    }
+}
+
+void Game::addScore(int id){
+    if(id == 0) placar1++;
+    else if(id == 1) placar2++;
+
+    //if(placar1 >= 10){ // vitoria player1
+    //}else if(placar2 >= 10){ // vitoria player2
+    //}else{
+        setBallPosition(width/2, height/2);
+        setBallMovement(randomMovement());
+        ballSpeed = 10;
+        collision_count = 0;
+    //}
+}
+
+void Game::drawScoreBoard(){
+    char str1[3] = "";
+    char str2[3] = "";
+
+    sprintf(str1, "%d", placar1);
+    sprintf(str2, "%d", placar2);
+
+    al_draw_text(scoreBoard, al_map_rgb(255, 255, 255), width/2 - 20, 10, ALLEGRO_ALIGN_CENTER, str1);
+    al_draw_text(scoreBoard, al_map_rgb(255, 255, 255), width/2 + 20, 10, ALLEGRO_ALIGN_CENTER, str2);
+}
+
+int Game::randomMovement(){
+    return ((rand() % 6) + 3);
 }
