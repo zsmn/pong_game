@@ -15,7 +15,6 @@ git clone https://github.com/zsmn/ihs_game.git
 You also will need:
 
 ```
-qt
 allegro >= 5
 ```
 
@@ -28,18 +27,9 @@ sudo apt-get update
 sudo apt-get install liballegro5-dev
 ```
 
-### Installing QT
-
-You can install qt running the script "installqt.sh" script
-
-```
-sudo sh installqt.sh
-```
-
 ## How to run
 
 ```
-qmake
-make
-./ihs_game
+g++ main.cpp include/game.cpp -o a -lm -lallegro_image -lallegro -lallegro_ttf -lallegro_font -lallegro_audio -lallegro_acodec -lallegro_primitives -lallegro_ttf -lallegro_font
+./a
 ```
