@@ -1,4 +1,4 @@
-# ihs_game
+# pong_game
 
 ## Getting Started
 
@@ -9,7 +9,7 @@ These instructions will get you a copy of the project up and running on your loc
 First clone this repository
 
 ```
-git clone https://github.com/zsmn/ihs_game.git
+git clone https://github.com/zsmn/pong_game.git
 ```
 
 You also will need:
